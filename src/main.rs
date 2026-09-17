@@ -15,30 +15,39 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let url = "https://api.openweathermap.org/data/2.5/weather";
 
     println!("Welcome to weather app!");
-    print!("Please input your city: ");
-    stdout().flush().unwrap();
 
-    let mut city = String::new();
-    stdin().read_line(&mut city).unwrap();
+    loop {
+        print!("Please input your city: ");
+        stdout().flush().unwrap();
 
-    let response = reqwest::Client::new()
-        .get(url)
-        .query(&[
-            ("q", city.as_str()),
-            ("units", "imperial"),
-            ("appid", api_key.as_str()),
-        ])
-        .send()
-        .await?;
+        let mut city = String::new();
+        stdin().read_line(&mut city).unwrap();
 
-    let weather_response: WeatherResponse = response.json().await?;
+        let response = reqwest::Client::new()
+            .get(url)
+            .query(&[
+                ("q", city.as_str()),
+                ("units", "imperial"),
+                ("appid", api_key.as_str()),
+            ])
+            .send()
+            .await?;
 
-    let application: Weather = weather_response.into_weather();
+        if !response.status().is_success() {
+            println!("City not found. Please try again");
+            continue;
+        }
 
-    println!("{}", city);
-    println!("High: {}", application.get_high_temp());
-    println!("Low: {}", application.get_low_temp());
-    println!("Condition: {}", application.get_weather_conditions());
+        let weather_response: WeatherResponse = response.json().await?;
 
-    Ok(())
+        let application: Weather = weather_response.into_weather();
+
+        println!("{}", city);
+        println!("High: {}", application.get_high_temp());
+        println!("Low: {}", application.get_low_temp());
+        println!("Condition: {}", application.get_weather_conditions());
+        println!();
+    }
+
+    // Ok(())
 }
